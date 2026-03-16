@@ -18,11 +18,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'irac_secret_key_2026';
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,   // เพิ่มบรรทัดนี้
+  port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASS || '',
-  database: 'irac_ref',
-  ssl: { rejectUnauthorized: false },  // เพิ่มบรรทัดนี้ (Aiven บังคับ SSL)
+  password: process.env.DB_PASSWORD || '',  // แก้จาก DB_PASS → DB_PASSWORD
+  database: process.env.DB_NAME || 'irac_ref',  // ดึงจาก env
+  ssl: { rejectUnauthorized: false },
   waitForConnections: true,
   connectionLimit: 10,
 });
