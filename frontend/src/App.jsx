@@ -2,17 +2,21 @@ import { useState, useEffect, useCallback } from "react";
 
 const API_BASE = "https://irac-backend-lspi.onrender.com/api";
 
-async function api(path, { method = "GET", body, token } = {}) {
+async function api(path, { method="GET", body, token }={}) {
+
   const res = await fetch(`${API_BASE}${path}`, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    headers:{
+      "Content-Type":"application/json",
+      ...(token ? { Authorization:`Bearer ${token}` } : {})
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? JSON.stringify(body) : undefined
   });
+
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "API Error");
+
+  if(!res.ok) throw new Error(data.error || "API Error");
+
   return data;
 }
 
@@ -381,13 +385,8 @@ function HistoryScreen({ token }) {
   },[token]);
   useEffect(()=>{ load(); },[load]);
   async function del(id) {
-    try {
-      await api(`/history/${id}`,{method:"DELETE",token});
-      setHistory(h=>h.filter(x=>x.id!==id));
-    } catch(err) {
-      alert("ลบไม่สำเร็จ: "+(err.message||"ไม่พบข้อมูล"));
-      load();
-    }
+    await api(`/history/${id}`,{method:"DELETE",token});
+    setHistory(h=>h.filter(x=>x.id!==id));
   }
   return (
     <div style={{padding:"24px 28px 40px"}}>
