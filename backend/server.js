@@ -246,10 +246,12 @@ app.put('/api/history/:id', auth, async (req, res) => {
 });
 
 // DELETE /api/history/:id
-app.delete('/api/history/:id', auth, (req, res) => {
-  const idx = usageHistory.findIndex(h => h.id === +req.params.id && h.user_id === req.user.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  usageHistory.splice(idx, 1);
+app.delete('/api/history/:id', auth, async (req, res) => {
+  const [result] = await pool.query(
+    'DELETE FROM usage_history WHERE id = ? AND user_id = ?',
+    [req.params.id, req.user.id]
+  );
+  if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
   res.json({ ok: true });
 });
 
