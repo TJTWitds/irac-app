@@ -260,26 +260,36 @@ app.post('/api/history', auth, async (req, res) => {
 
 
 
-app.put('/api/history/:id', auth, (req, res) => {
-  const idx = usageHistory.findIndex(h => h.id === +req.params.id && h.user_id === req.user.id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
- 
+// แทนที่ PUT /api/history/:id ทั้งหมด
+app.put('/api/history/:id', auth, async (req, res) => {
   const { pest_id, pest_name, ingredient_id, ingredient_name, g_id, note } = req.body;
- 
-  // อัปเดตเฉพาะ field ที่ส่งมา ถ้าไม่ส่งก็คงค่าเดิม
-  const updated = {
-    ...usageHistory[idx],
-    ...(pest_id        !== undefined && { pest_id }),
-    ...(pest_name      !== undefined && { pest_name }),
-    ...(ingredient_id  !== undefined && { ingredient_id }),
-    ...(ingredient_name !== undefined && { ingredient_name }),
-    ...(g_id           !== undefined && { g_id }),
-    ...(note           !== undefined && { note }),
-    updated_at: new Date().toISOString(),
-  };
- 
-  usageHistory[idx] = updated;
-  res.json(updated);
+
+  const fields = [];
+  const values = [];
+
+  if (pest_id        !== undefined) { fields.push('pest_id = ?');         values.push(pest_id); }
+  if (pest_name      !== undefined) { fields.push('pest_name = ?');       values.push(pest_name); }
+  if (ingredient_id  !== undefined) { fields.push('ingredient_id = ?');   values.push(ingredient_id); }
+  if (ingredient_name !== undefined){ fields.push('ingredient_name = ?'); values.push(ingredient_name); }
+  if (g_id           !== undefined) { fields.push('g_id = ?');            values.push(g_id); }
+  if (note           !== undefined) { fields.push('note = ?');            values.push(note); }
+
+  if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+  values.push(req.params.id, req.user.id);
+
+  await pool.query(
+    `UPDATE usage_history SET ${fields.join(', ')} WHERE id = ? AND user_id = ?`,
+    values
+  );
+
+  const [rows] = await pool.query(
+    'SELECT * FROM usage_history WHERE id = ? AND user_id = ?',
+    [req.params.id, req.user.id]
+  );
+
+  if (!rows.length) return res.status(404).json({ error: 'Not found' });
+  res.json(rows[0]);
 });
 
 
