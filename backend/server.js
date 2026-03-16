@@ -5,8 +5,12 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+const router = express.Router(); // ต้องมีตัวนี้
+
 app.use(cors({ origin: '*' }));
 app.use(express.json());
+
+app.use("/api", router);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'irac_secret_key_2026';
 
