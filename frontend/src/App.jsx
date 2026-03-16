@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API_BASE = "http://localhost:4000/api";
+const API_BASE = "https://irac-backend-lspi.onrender.com";
 
 async function api(path, { method = "GET", body, token } = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
