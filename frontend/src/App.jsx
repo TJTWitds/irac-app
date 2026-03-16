@@ -195,33 +195,22 @@ function PestListScreen({ token, onSelect }) {
   );
 }
 
-// ─── PEST DETAIL — แสดงสารทุกตัวพร้อมป้าย ✅ แนะนำ / 🚫 ห้ามใช้ ─────────
+// ─── PEST DETAIL ───────────────────────────────────────────────────────────
 function PestDetailScreen({ token, pest, onBack, onLogUsage }) {
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      // โหลดข้อมูลแมลง + สารทั้งหมด
       const pestData = await api(`/pests/${pest.pest_id}`, { token });
       const allIngredients = pestData.ingredients || [];
 
-      // นับจำนวนสารในแต่ละกลุ่ม → กลุ่มที่มีสารเดียวคือ "ห้ามซ้ำ" น้อย
-      // logic: กลุ่มที่มีหลายตัวเลือก = แนะนำ, กลุ่มที่มีตัวเดียว = ระวัง
-      // แต่ที่ชัดเจนกว่า: เรียกทุก rotation ของทุก gid ที่มี
-      const gids = [...new Set(allIngredients.map(i => i.g_id))];
-
-      // สร้าง map: gid → forbidden (กลุ่มเดียวกัน = ห้าม, กลุ่มอื่น = แนะนำ)
-      // แต่ไม่ต้อง call API ซ้ำ — คิดจาก logic ตรงๆ:
-      // - ถ้าสารอยู่คนละกลุ่มกัน = หมุนเวียนได้
-      // - ถ้าสารอยู่กลุ่มเดียวกัน = ห้ามใช้ต่อเนื่อง
-
-      // group ทุกสารตาม gid
       const byGroup = allIngredients.reduce((acc, ing) => {
         (acc[ing.g_id] = acc[ing.g_id] || []).push(ing);
         return acc;
       }, {});
 
+      const gids = [...new Set(allIngredients.map(i => i.g_id))];
       setIngredients({ all: allIngredients, byGroup, gids });
       setLoading(false);
     }
@@ -241,7 +230,6 @@ function PestDetailScreen({ token, pest, onBack, onLogUsage }) {
         ← กลับ
       </button>
 
-      {/* Pest header */}
       <div style={{background:C.card,border:`1px solid ${C.cardBorder}`,borderRadius:16,
         padding:"20px 24px",marginBottom:28}}>
         <div style={{fontSize:24,fontWeight:900,color:C.text}}>{pest.pest_name}</div>
@@ -251,7 +239,6 @@ function PestDetailScreen({ token, pest, onBack, onLogUsage }) {
         </div>
       </div>
 
-      {/* คำอธิบาย */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:28}}>
         <div style={{background:C.accentDim,border:`1px solid ${C.accent}33`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontSize:22}}>✅</span>
@@ -269,15 +256,12 @@ function PestDetailScreen({ token, pest, onBack, onLogUsage }) {
         </div>
       </div>
 
-      {/* แสดงแต่ละกลุ่ม */}
       {Object.entries(byGroup).map(([gid, groupIngs]) => {
         const color = gColor(gid);
-        // สารในกลุ่มอื่นทั้งหมด = แนะนำให้ใช้สลับกัน
         const otherGroups = Object.entries(byGroup).filter(([g]) => g !== gid);
 
         return (
           <div key={gid} style={{marginBottom:32}}>
-            {/* Group header */}
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14,
               padding:"12px 18px",background:color+"11",border:`1px solid ${color}33`,borderRadius:12}}>
               <div style={{width:12,height:12,borderRadius:"50%",background:color,flexShrink:0}}/>
@@ -292,7 +276,6 @@ function PestDetailScreen({ token, pest, onBack, onLogUsage }) {
             </div>
 
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-              {/* ซ้าย: สารในกลุ่มนี้ = ห้ามใช้ซ้ำ */}
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:C.danger,letterSpacing:1,
                   textTransform:"uppercase",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
@@ -329,7 +312,6 @@ function PestDetailScreen({ token, pest, onBack, onLogUsage }) {
                 </div>
               </div>
 
-              {/* ขวา: สารในกลุ่มอื่น = แนะนำให้ใช้สลับ */}
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:C.accent,letterSpacing:1,
                   textTransform:"uppercase",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
@@ -514,6 +496,7 @@ export default function App() {
   const [tab, setTab] = useState("pests");
   const [selectedPest, setSelectedPest] = useState(null);
   const [logData, setLogData] = useState(null);
+  const [historyKey, setHistoryKey] = useState(0); // ✅ เพิ่ม
 
   if (!token) return <LoginScreen onLogin={(t,u)=>{ setToken(t); setUser(u); }}/>;
 
@@ -541,11 +524,11 @@ export default function App() {
               onBack={()=>setSelectedPest(null)} onLogUsage={setLogData}/>
           )}
           {tab==="products"&&<ProductsScreen token={token}/>}
-          {tab==="history"&&<HistoryScreen token={token} key={String(logData)}/>}
+          {tab==="history"&&<HistoryScreen token={token} key={historyKey}/>} {/* ✅ แก้ key */}
         </div>
       </div>
       {logData&&<LogModal token={token} data={logData}
-        onClose={()=>{ setLogData(null); setTab("history"); }}/>}
+        onClose={()=>{ setLogData(null); setHistoryKey(k=>k+1); setTab("history"); }}/>} {/* ✅ เพิ่ม setHistoryKey */}
     </div>
   );
 }
