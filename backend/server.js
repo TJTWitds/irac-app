@@ -237,6 +237,35 @@ app.get('/api/rotation/recommend', auth, async (req, res) => {
 
 });
 
+// ─────────────────────────────────────────
+// HISTORY
+// ─────────────────────────────────────────
+
+app.get('/api/history', auth, async (req, res) => {
+  const [rows] = await pool.query(
+    'SELECT * FROM usage_history WHERE user_id = ? ORDER BY used_at DESC',
+    [req.user.id]
+  );
+  res.json(rows);
+});
+
+app.post('/api/history', auth, async (req, res) => {
+  const { pest_id, pest_name, ingredient_id, ingredient_name, g_id, note } = req.body;
+  const [result] = await pool.query(
+    'INSERT INTO usage_history (user_id, pest_id, pest_name, ingredient_id, ingredient_name, g_id, note) VALUES (?,?,?,?,?,?,?)',
+    [req.user.id, pest_id, pest_name, ingredient_id, ingredient_name, g_id, note || null]
+  );
+  res.json({ id: result.insertId });
+});
+
+app.delete('/api/history/:id', auth, async (req, res) => {
+  await pool.query(
+    'DELETE FROM usage_history WHERE id = ? AND user_id = ?',
+    [req.params.id, req.user.id]
+  );
+  res.json({ ok: true });
+});
+
 
 // ─────────────────────────────────────────
 // PRODUCT
