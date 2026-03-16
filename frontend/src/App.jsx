@@ -365,7 +365,11 @@ function HistoryScreen({ token }) {
   const load = useCallback(()=>{
     api("/history",{token}).then(setHistory).finally(()=>setLoading(false));
   },[token]);
-  useEffect(()=>{ load(); },[load]);
+  useEffect(()=>{
+    load();
+    const interval = setInterval(load, 5000); // refresh ทุก 5 วิ
+    return () => clearInterval(interval);
+  },[load]);
   async function del(id) {
     await api(`/history/${id}`,{method:"DELETE",token});
     setHistory(h=>h.filter(x=>x.id!==id));
